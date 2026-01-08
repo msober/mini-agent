@@ -4,24 +4,44 @@ import { Conversation } from './conversation.js';
 import { ToolRegistry } from '../tools/registry.js';
 import { MCPServerManager } from '../mcp/server.js';
 import { loadMCPConfig } from '../config/env.js';
+import { SubagentManager, createSubagentTool } from '../subagent/index.js';
 import type { Tool } from '../tools/types.js';
 import type { MCPServerConfig } from '../mcp/types.js';
+import type { SubagentConfig } from '../subagent/types.js';
 
 export class Agent {
   private client: LLMClient;
   private conversation: Conversation;
   private tools: ToolRegistry;
   private mcpManager: MCPServerManager;
+  private subagentManager: SubagentManager;
 
   constructor(systemPrompt: string) {
     this.client = new LLMClient();
     this.conversation = new Conversation(systemPrompt);
     this.tools = new ToolRegistry();
     this.mcpManager = new MCPServerManager();
+    this.subagentManager = new SubagentManager();
   }
 
   registerTool(tool: Tool): void {
     this.tools.register(tool);
+  }
+
+  registerSubagent(config: SubagentConfig): void {
+    this.subagentManager.registerSubagent(config);
+  }
+
+  initializeSubagents(): void {
+    // Pass available tools to subagent manager
+    this.subagentManager.setAvailableTools(this.tools.getToolsMap());
+    // Register the delegate_task tool
+    const delegateTool = createSubagentTool(this.subagentManager);
+    this.tools.register(delegateTool);
+  }
+
+  listSubagents(): string[] {
+    return this.subagentManager.getSubagentNames();
   }
 
   async addMCPServer(config: MCPServerConfig): Promise<void> {

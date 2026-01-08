@@ -30,4 +30,8 @@ export class ToolRegistry {
   has(name: string): boolean {
     return this.tools.has(name);
   }
+
+  getToolsMap(): Map<string, Tool> {
+    return new Map(this.tools);
+  }
 }
