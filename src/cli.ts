@@ -38,10 +38,17 @@ export async function runCLI(): Promise<void> {
   agent.registerTool(globTool);
   agent.registerTool(grepTool);
 
+  // Load MCP servers from config
+  await agent.loadMCPServers();
+
   const rl = createReadline();
 
-  console.log(chalk.cyan('Mini-Agent v0.2.0'));
+  console.log(chalk.cyan('Mini-Agent v0.3.0'));
   console.log(chalk.gray('Tools: bash, read, write, edit, glob, grep'));
+  const mcpServers = agent.listMCPServers();
+  if (mcpServers.length > 0) {
+    console.log(chalk.gray(`MCP Servers: ${mcpServers.join(', ')}`));
+  }
   console.log(chalk.gray('Type "exit" to quit.\n'));
 
   while (true) {
@@ -54,6 +61,7 @@ export async function runCLI(): Promise<void> {
 
     if (trimmed.toLowerCase() === 'exit') {
       console.log(chalk.gray('Goodbye!'));
+      await agent.shutdown();
       break;
     }
 

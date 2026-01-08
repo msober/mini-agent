@@ -2,22 +2,57 @@ import chalk from 'chalk';
 import { LLMClient } from '../llm/client.js';
 import { Conversation } from './conversation.js';
 import { ToolRegistry } from '../tools/registry.js';
-import type { Tool, ToolCall } from '../tools/types.js';
-import type { Message } from '../llm/types.js';
+import { MCPServerManager } from '../mcp/server.js';
+import { loadMCPConfig } from '../config/env.js';
+import type { Tool } from '../tools/types.js';
+import type { MCPServerConfig } from '../mcp/types.js';
 
 export class Agent {
   private client: LLMClient;
   private conversation: Conversation;
   private tools: ToolRegistry;
+  private mcpManager: MCPServerManager;
 
   constructor(systemPrompt: string) {
     this.client = new LLMClient();
     this.conversation = new Conversation(systemPrompt);
     this.tools = new ToolRegistry();
+    this.mcpManager = new MCPServerManager();
   }
 
   registerTool(tool: Tool): void {
     this.tools.register(tool);
+  }
+
+  async addMCPServer(config: MCPServerConfig): Promise<void> {
+    await this.mcpManager.addServer(config);
+    // Register MCP tools
+    const mcpTools = await this.mcpManager.getAllTools();
+    for (const tool of mcpTools) {
+      if (!this.tools.has(tool.definition.name)) {
+        this.tools.register(tool);
+      }
+    }
+    console.log(chalk.green(`MCP server connected: ${config.name}`));
+  }
+
+  async removeMCPServer(name: string): Promise<void> {
+    await this.mcpManager.removeServer(name);
+  }
+
+  listMCPServers(): string[] {
+    return this.mcpManager.listServers();
+  }
+
+  async loadMCPServers(): Promise<void> {
+    const configs = loadMCPConfig();
+    for (const config of configs) {
+      try {
+        await this.addMCPServer(config);
+      } catch (error) {
+        console.error(chalk.red(`Failed to connect MCP server ${config.name}:`), error);
+      }
+    }
   }
 
   async run(userInput: string): Promise<string> {
@@ -72,5 +107,9 @@ export class Agent {
 
   getConversation(): Conversation {
     return this.conversation;
+  }
+
+  async shutdown(): Promise<void> {
+    await this.mcpManager.disconnectAll();
   }
 }

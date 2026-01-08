@@ -6,7 +6,7 @@
 
 - [x] 步骤1: 基础对话 - 命令行交互 + 流式输出
 - [x] 步骤2: 工具调用 - function calling (bash, read, write, edit, glob, grep)
-- [ ] 步骤3: MCP 支持 - Model Context Protocol
+- [x] 步骤3: MCP 支持 - Model Context Protocol
 - [ ] 步骤4: 规划能力 - 任务分解与执行
 - [ ] 步骤5: 子代理 - 委托任务给专门的 subagent
 - [ ] 步骤6: 技能系统 - 可扩展的斜杠命令
@@ -35,6 +35,24 @@ npm start
 | OPENAI_API_KEY | API 密钥 | - |
 | OPENAI_BASE_URL | API 地址 | https://api.openai.com/v1 |
 | MODEL | 模型名称 | gpt-4o |
+| MCP_CONFIG_PATH | MCP 配置文件路径 | ./mcp-servers.json |
+
+## MCP 配置
+
+创建 `mcp-servers.json` 文件配置 MCP 服务器，启动时自动连接：
+
+```json
+{
+  "mcpServers": {
+    "context7": {
+      "command": "npx",
+      "args": ["-y", "@anthropic-ai/context7-mcp"]
+    }
+  }
+}
+```
+
+参考 `mcp-servers.example.json` 示例文件。
 
 ## 项目结构
 
@@ -50,16 +68,20 @@ src/
 ├── llm/
 │   ├── client.ts         # OpenAI 客户端
 │   └── types.ts          # 类型定义
-└── tools/
-    ├── types.ts          # 工具类型定义
-    ├── registry.ts       # 工具注册表
-    └── builtin/          # 内置工具
-        ├── bash.ts       # 命令执行
-        ├── read.ts       # 文件读取
-        ├── write.ts      # 文件写入
-        ├── edit.ts       # 精确编辑
-        ├── glob.ts       # 文件搜索
-        └── grep.ts       # 内容搜索
+├── tools/
+│   ├── types.ts          # 工具类型定义
+│   ├── registry.ts       # 工具注册表
+│   └── builtin/          # 内置工具
+│       ├── bash.ts       # 命令执行
+│       ├── read.ts       # 文件读取
+│       ├── write.ts      # 文件写入
+│       ├── edit.ts       # 精确编辑
+│       ├── glob.ts       # 文件搜索
+│       └── grep.ts       # 内容搜索
+└── mcp/
+    ├── types.ts          # MCP 类型定义
+    ├── client.ts         # MCP 客户端
+    └── server.ts         # MCP 服务器管理
 ```
 
 ## 实现计划
