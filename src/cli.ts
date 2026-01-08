@@ -1,9 +1,18 @@
 import * as readline from 'readline';
 import chalk from 'chalk';
-import { LLMClient } from './llm/client.js';
-import { Conversation } from './core/conversation.js';
+import { Agent } from './core/agent.js';
+import {
+  bashTool,
+  readTool,
+  writeTool,
+  editTool,
+  globTool,
+  grepTool,
+} from './tools/builtin/index.js';
 
-const SYSTEM_PROMPT = `You are a helpful assistant.`;
+const SYSTEM_PROMPT = `You are a helpful coding assistant with access to tools.
+You can execute bash commands, read/write files, and search code.
+Always use tools when appropriate to help the user.`;
 
 function createReadline(): readline.Interface {
   return readline.createInterface({
@@ -19,11 +28,20 @@ function question(rl: readline.Interface, prompt: string): Promise<string> {
 }
 
 export async function runCLI(): Promise<void> {
-  const client = new LLMClient();
-  const conversation = new Conversation(SYSTEM_PROMPT);
+  const agent = new Agent(SYSTEM_PROMPT);
+
+  // Register all builtin tools
+  agent.registerTool(bashTool);
+  agent.registerTool(readTool);
+  agent.registerTool(writeTool);
+  agent.registerTool(editTool);
+  agent.registerTool(globTool);
+  agent.registerTool(grepTool);
+
   const rl = createReadline();
 
-  console.log(chalk.cyan('Mini-Agent v0.1.0'));
+  console.log(chalk.cyan('Mini-Agent v0.2.0'));
+  console.log(chalk.gray('Tools: bash, read, write, edit, glob, grep'));
   console.log(chalk.gray('Type "exit" to quit.\n'));
 
   while (true) {
@@ -39,19 +57,10 @@ export async function runCLI(): Promise<void> {
       break;
     }
 
-    conversation.addUser(trimmed);
-
     try {
-      process.stdout.write(chalk.blue('Assistant: '));
-
-      let response = '';
-      for await (const chunk of client.streamChat(conversation.getMessages())) {
-        process.stdout.write(chunk);
-        response += chunk;
-      }
-
-      console.log('\n');
-      conversation.addAssistant(response);
+      const response = await agent.run(trimmed);
+      console.log(chalk.blue('\nAssistant:'), response);
+      console.log();
     } catch (error) {
       console.error(chalk.red('\nError:'), error instanceof Error ? error.message : error);
       console.log();

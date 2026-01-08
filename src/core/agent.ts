@@ -1,0 +1,76 @@
+import chalk from 'chalk';
+import { LLMClient } from '../llm/client.js';
+import { Conversation } from './conversation.js';
+import { ToolRegistry } from '../tools/registry.js';
+import type { Tool, ToolCall } from '../tools/types.js';
+import type { Message } from '../llm/types.js';
+
+export class Agent {
+  private client: LLMClient;
+  private conversation: Conversation;
+  private tools: ToolRegistry;
+
+  constructor(systemPrompt: string) {
+    this.client = new LLMClient();
+    this.conversation = new Conversation(systemPrompt);
+    this.tools = new ToolRegistry();
+  }
+
+  registerTool(tool: Tool): void {
+    this.tools.register(tool);
+  }
+
+  async run(userInput: string): Promise<string> {
+    this.conversation.addUser(userInput);
+
+    while (true) {
+      const response = await this.client.chatWithTools(
+        this.conversation.getMessages(),
+        this.tools.getDefinitions()
+      );
+
+      // If there are tool calls, execute them
+      if (response.toolCalls && response.toolCalls.length > 0) {
+        // Add assistant message with tool calls
+        this.conversation.addAssistantWithToolCalls(response.toolCalls);
+
+        // Execute each tool call
+        for (const toolCall of response.toolCalls) {
+          console.log(chalk.yellow(`\n[Tool: ${toolCall.function.name}]`));
+
+          try {
+            const args = JSON.parse(toolCall.function.arguments);
+            console.log(chalk.gray(JSON.stringify(args, null, 2)));
+
+            const result = await this.tools.execute(toolCall.function.name, args);
+
+            // Show truncated result
+            const displayResult = result.length > 500
+              ? result.substring(0, 500) + '...(truncated)'
+              : result;
+            console.log(chalk.gray(displayResult));
+
+            // Add tool result to conversation
+            this.conversation.addToolResult(toolCall.id, result);
+          } catch (error) {
+            const errorMsg = `Error: ${(error as Error).message}`;
+            console.log(chalk.red(errorMsg));
+            this.conversation.addToolResult(toolCall.id, errorMsg);
+          }
+        }
+
+        // Continue the loop to get the next response
+        continue;
+      }
+
+      // No tool calls, we have a final response
+      const content = response.content || '';
+      this.conversation.addAssistant(content);
+      return content;
+    }
+  }
+
+  getConversation(): Conversation {
+    return this.conversation;
+  }
+}

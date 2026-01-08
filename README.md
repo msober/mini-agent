@@ -5,7 +5,7 @@
 ## 功能特性
 
 - [x] 步骤1: 基础对话 - 命令行交互 + 流式输出
-- [ ] 步骤2: 工具调用 - function calling (bash, read, write, edit, glob, grep)
+- [x] 步骤2: 工具调用 - function calling (bash, read, write, edit, glob, grep)
 - [ ] 步骤3: MCP 支持 - Model Context Protocol
 - [ ] 步骤4: 规划能力 - 任务分解与执行
 - [ ] 步骤5: 子代理 - 委托任务给专门的 subagent
@@ -40,15 +40,26 @@ npm start
 
 ```
 src/
-├── index.ts          # 程序入口
-├── cli.ts            # CLI 主循环
+├── index.ts              # 程序入口
+├── cli.ts                # CLI 主循环
 ├── config/
-│   └── env.ts        # 环境变量配置
+│   └── env.ts            # 环境变量配置
 ├── core/
+│   ├── agent.ts          # Agent 核心类
 │   └── conversation.ts   # 对话历史管理
-└── llm/
-    ├── client.ts     # OpenAI 客户端
-    └── types.ts      # 类型定义
+├── llm/
+│   ├── client.ts         # OpenAI 客户端
+│   └── types.ts          # 类型定义
+└── tools/
+    ├── types.ts          # 工具类型定义
+    ├── registry.ts       # 工具注册表
+    └── builtin/          # 内置工具
+        ├── bash.ts       # 命令执行
+        ├── read.ts       # 文件读取
+        ├── write.ts      # 文件写入
+        ├── edit.ts       # 精确编辑
+        ├── glob.ts       # 文件搜索
+        └── grep.ts       # 内容搜索
 ```
 
 ## 实现计划

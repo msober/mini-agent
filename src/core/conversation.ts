@@ -1,4 +1,4 @@
-import type { Message } from '../llm/types.js';
+import type { Message, ToolCall } from '../llm/types.js';
 
 export class Conversation {
   private messages: Message[] = [];
@@ -14,6 +14,22 @@ export class Conversation {
 
   addAssistant(content: string): void {
     this.messages.push({ role: 'assistant', content });
+  }
+
+  addAssistantWithToolCalls(toolCalls: ToolCall[]): void {
+    this.messages.push({
+      role: 'assistant',
+      content: null,
+      tool_calls: toolCalls,
+    });
+  }
+
+  addToolResult(toolCallId: string, result: string): void {
+    this.messages.push({
+      role: 'tool',
+      content: result,
+      tool_call_id: toolCallId,
+    });
   }
 
   getMessages(): Message[] {
