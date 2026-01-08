@@ -1,1 +1,3 @@
-console.log("Hello, TypeScript!");
+import { runCLI } from './cli.js';
+
+runCLI();
