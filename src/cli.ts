@@ -1,6 +1,7 @@
 import * as readline from 'readline';
 import chalk from 'chalk';
 import { Agent } from './core/agent.js';
+import { TodoManager } from './todo/index.js';
 import {
   bashTool,
   readTool,
@@ -8,11 +9,16 @@ import {
   editTool,
   globTool,
   grepTool,
+  createTodoWriteTool,
 } from './tools/builtin/index.js';
 
 const SYSTEM_PROMPT = `You are a helpful coding assistant with access to tools.
 You can execute bash commands, read/write files, and search code.
-Always use tools when appropriate to help the user.`;
+
+IMPORTANT: Use the todo_write tool to track your tasks when working on multi-step tasks.
+- Create a todo list at the start of complex tasks
+- Update task status as you work (pending -> in_progress -> completed)
+- This helps the user see your progress`;
 
 function createReadline(): readline.Interface {
   return readline.createInterface({
@@ -28,6 +34,7 @@ function question(rl: readline.Interface, prompt: string): Promise<string> {
 }
 
 export async function runCLI(): Promise<void> {
+  const todoManager = new TodoManager();
   const agent = new Agent(SYSTEM_PROMPT);
 
   // Register all builtin tools
@@ -37,14 +44,15 @@ export async function runCLI(): Promise<void> {
   agent.registerTool(editTool);
   agent.registerTool(globTool);
   agent.registerTool(grepTool);
+  agent.registerTool(createTodoWriteTool(todoManager));
 
   // Load MCP servers from config
   await agent.loadMCPServers();
 
   const rl = createReadline();
 
-  console.log(chalk.cyan('Mini-Agent v0.3.0'));
-  console.log(chalk.gray('Tools: bash, read, write, edit, glob, grep'));
+  console.log(chalk.cyan('Mini-Agent v0.4.0'));
+  console.log(chalk.gray('Tools: bash, read, write, edit, glob, grep, todo_write'));
   const mcpServers = agent.listMCPServers();
   if (mcpServers.length > 0) {
     console.log(chalk.gray(`MCP Servers: ${mcpServers.join(', ')}`));

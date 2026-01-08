@@ -7,7 +7,7 @@
 - [x] 步骤1: 基础对话 - 命令行交互 + 流式输出
 - [x] 步骤2: 工具调用 - function calling (bash, read, write, edit, glob, grep)
 - [x] 步骤3: MCP 支持 - Model Context Protocol
-- [ ] 步骤4: 规划能力 - 任务分解与执行
+- [x] 步骤4: TODO 管理 - 任务列表管理 (todo_write 工具)
 - [ ] 步骤5: 子代理 - 委托任务给专门的 subagent
 - [ ] 步骤6: 技能系统 - 可扩展的斜杠命令
 
