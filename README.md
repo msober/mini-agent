@@ -8,8 +8,8 @@
 - [x] 步骤2: 工具调用 - function calling (bash, read, write, edit, glob, grep)
 - [x] 步骤3: MCP 支持 - Model Context Protocol
 - [x] 步骤4: TODO 管理 - 任务列表管理 (todo_write 工具)
-- [ ] 步骤5: 子代理 - 委托任务给专门的 subagent
-- [ ] 步骤6: 技能系统 - 可扩展的斜杠命令
+- [x] 步骤5: 子代理 - 委托任务给专门的 subagent (delegate_task 工具)
+- [x] 步骤6: 技能系统 - 按需加载的领域知识注入 (load_skill 工具)
 
 ## 快速开始
 
@@ -77,16 +77,78 @@ src/
 │       ├── write.ts      # 文件写入
 │       ├── edit.ts       # 精确编辑
 │       ├── glob.ts       # 文件搜索
-│       └── grep.ts       # 内容搜索
-└── mcp/
-    ├── types.ts          # MCP 类型定义
-    ├── client.ts         # MCP 客户端
-    └── server.ts         # MCP 服务器管理
+│       ├── grep.ts       # 内容搜索
+│       ├── todo.ts       # TODO 管理
+│       └── skill.ts      # 技能加载
+├── mcp/
+│   ├── types.ts          # MCP 类型定义
+│   ├── client.ts         # MCP 客户端
+│   └── server.ts         # MCP 服务器管理
+├── todo/
+│   ├── types.ts          # TODO 类型定义
+│   └── manager.ts        # TODO 列表管理
+├── subagent/
+│   ├── types.ts          # 子代理类型定义
+│   ├── worker.ts         # WorkerAgent 执行器
+│   └── manager.ts        # 子代理管理 + delegate_task 工具
+└── skills/
+    ├── types.ts          # 技能类型定义
+    ├── loader.ts         # SKILL.md 解析器
+    └── registry.ts       # 技能注册表
+
+skills/                   # 技能目录 (项目根目录)
+└── code-review/
+    └── SKILL.md          # 代码审查技能
 ```
 
-## 实现计划
+## 核心概念
 
-### 步骤 1: 基础对话 (已完成)
+### Tools vs Skills
+
+| 概念 | 本质 | 例子 |
+|------|------|------|
+| **Tool** | 模型**能做**什么 (capabilities) | bash, read, write, glob, grep |
+| **Skill** | 模型**知道怎么做** (expertise) | code-review, MCP 开发, PDF 处理 |
+
+### 技能系统
+
+技能是按需加载的领域知识，通过 `load_skill` 工具注入到对话中：
+
+1. **渐进式加载**: 元数据 (~100 tokens) → SKILL.md 内容 (~2000 tokens)
+2. **缓存友好**: 通过 tool_result 注入，不修改 system prompt
+3. **热插拔**: 写个 SKILL.md 就能教会模型新技能
+
+### SKILL.md 格式
+
+```markdown
+---
+name: code-review
+description: Perform thorough code reviews...
+---
+
+# Code Review Skill
+
+You now have expertise in conducting comprehensive code reviews...
+
+## Checklist
+- [ ] Security issues
+- [ ] Performance problems
+...
+```
+
+### 子代理
+
+内置子代理通过 `delegate_task` 工具调用：
+
+| 子代理 | 用途 | 可用工具 |
+|--------|------|----------|
+| explorer | 搜索代码库结构 | glob, grep, read |
+| researcher | 阅读理解代码 | read, glob, grep |
+| planner | 创建实现计划 | glob, grep, read |
+
+## 实现详情
+
+### 步骤 1: 基础对话
 - readline 命令行交互
 - OpenAI 协议流式输出
 - 对话历史管理
@@ -98,22 +160,21 @@ src/
 - Agent 工具调用循环
 
 ### 步骤 3: MCP 支持
-- MCP 客户端
+- MCP 客户端封装
 - 服务器连接管理
-- MCP 工具集成
+- 配置文件自动加载
 
-### 步骤 4: 规划能力
-- Task/Plan 类型
-- Planner (LLM 生成计划)
-- PlanExecutor (按计划执行)
+### 步骤 4: TODO 管理
+- TodoManager 任务列表管理
+- todo_write 工具
+- 状态跟踪: pending → in_progress → completed
 
 ### 步骤 5: 子代理
 - SubagentConfig 配置
-- WorkerAgent 工作代理
-- SubagentManager (注册为工具)
+- WorkerAgent 独立执行器
+- delegate_task 工具
 
 ### 步骤 6: 技能系统
-- Skill 接口
-- 技能注册表和加载器
-- 内置技能: /commit, /review
-- 斜杠命令解析
+- SKILL.md 解析 (YAML frontmatter + Markdown body)
+- SkillRegistry 元数据管理
+- load_skill 工具 (知识注入)
