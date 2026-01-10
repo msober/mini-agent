@@ -1,6 +1,10 @@
 # Mini-Agent
 
+[English](README.md) | [中文](README_CN.md)
+
 一个类似 Claude Code 的命令行 agent 工具，用于学习 Agent 开发。
+
+> **📖 Agent 开发新手？** 阅读 [Agent 开发指南](docs/agent-development-guide.md)，了解如何通过 6 个步骤从零构建 AI Agent 的完整教程。
 
 ## 功能特性
 

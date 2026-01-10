@@ -1,6 +1,10 @@
 # Mini-Agent
 
+[English](README.md) | [中文](README_CN.md)
+
 A command-line agent tool inspired by Claude Code, designed for learning Agent development.
+
+> **📖 New to Agent development?** Read the [Agent Development Guide](docs/agent-development-guide.md) for a comprehensive walkthrough of building an AI Agent from scratch in 6 steps.
 
 ## Features
 
