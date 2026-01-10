@@ -1,45 +1,45 @@
 # Mini-Agent
 
-一个类似 Claude Code 的命令行 agent 工具，用于学习 Agent 开发。
+A command-line agent tool inspired by Claude Code, designed for learning Agent development.
 
-## 功能特性
+## Features
 
-- [x] 步骤1: 基础对话 - 命令行交互 + 流式输出
-- [x] 步骤2: 工具调用 - function calling (bash, read, write, edit, glob, grep)
-- [x] 步骤3: MCP 支持 - Model Context Protocol
-- [x] 步骤4: TODO 管理 - 任务列表管理 (todo_write 工具)
-- [x] 步骤5: 子代理 - 委托任务给专门的 subagent (delegate_task 工具)
-- [x] 步骤6: 技能系统 - 按需加载的领域知识注入 (load_skill 工具)
+- [x] **Step 1: Basic Conversation** - CLI interaction + Streaming output
+- [x] **Step 2: Tool Calling** - Function calling (bash, read, write, edit, glob, grep)
+- [x] **Step 3: MCP Support** - Model Context Protocol
+- [x] **Step 4: TODO Management** - Task list management (`todo_write` tool)
+- [x] **Step 5: Sub-agents** - Delegate tasks to specialized sub-agents (`delegate_task` tool)
+- [x] **Step 6: Skill System** - On-demand domain knowledge injection (`load_skill` tool)
 
-## 快速开始
+## Quick Start
 
 ```bash
-# 安装依赖
+# Install dependencies
 npm install
 
-# 配置环境变量
+# Configure environment variables
 cp .env.example .env
-# 编辑 .env 填入你的 API Key
+# Edit .env and fill in your API Key
 
-# 编译
+# Build
 npm run build
 
-# 运行
+# Run
 npm start
 ```
 
-## 环境变量
+## Environment Variables
 
-| 变量 | 说明 | 默认值 |
-|------|------|--------|
-| OPENAI_API_KEY | API 密钥 | - |
-| OPENAI_BASE_URL | API 地址 | https://api.openai.com/v1 |
-| MODEL | 模型名称 | gpt-4o |
-| MCP_CONFIG_PATH | MCP 配置文件路径 | ./mcp-servers.json |
+| Variable | Description | Default Value |
+|----------|-------------|---------------|
+| OPENAI_API_KEY | API Key | - |
+| OPENAI_BASE_URL | API Base URL | https://api.openai.com/v1 |
+| MODEL | Model Name | gpt-4o |
+| MCP_CONFIG_PATH | MCP Config Path | ./mcp-servers.json |
 
-## MCP 配置
+## MCP Configuration
 
-创建 `mcp-servers.json` 文件配置 MCP 服务器，启动时自动连接：
+Create an `mcp-servers.json` file to configure MCP servers. They will connect automatically upon startup:
 
 ```json
 {
@@ -52,73 +52,73 @@ npm start
 }
 ```
 
-参考 `mcp-servers.example.json` 示例文件。
+Refer to the `mcp-servers.example.json` file for examples.
 
-## 项目结构
+## Project Structure
 
 ```
 src/
-├── index.ts              # 程序入口
-├── cli.ts                # CLI 主循环
+├── index.ts              # Entry point
+├── cli.ts                # CLI main loop
 ├── config/
-│   └── env.ts            # 环境变量配置
+│   └── env.ts            # Environment variable config
 ├── core/
-│   ├── agent.ts          # Agent 核心类
-│   └── conversation.ts   # 对话历史管理
+│   ├── agent.ts          # Agent core class
+│   └── conversation.ts   # Conversation history management
 ├── llm/
-│   ├── client.ts         # OpenAI 客户端
-│   └── types.ts          # 类型定义
+│   ├── client.ts         # OpenAI client
+│   └── types.ts          # Type definitions
 ├── tools/
-│   ├── types.ts          # 工具类型定义
-│   ├── registry.ts       # 工具注册表
-│   └── builtin/          # 内置工具
-│       ├── bash.ts       # 命令执行
-│       ├── read.ts       # 文件读取
-│       ├── write.ts      # 文件写入
-│       ├── edit.ts       # 精确编辑
-│       ├── glob.ts       # 文件搜索
-│       ├── grep.ts       # 内容搜索
-│       ├── todo.ts       # TODO 管理
-│       └── skill.ts      # 技能加载
+│   ├── types.ts          # Tool type definitions
+│   ├── registry.ts       # Tool registry
+│   └── builtin/          # Built-in tools
+│       ├── bash.ts       # Command execution
+│       ├── read.ts       # File reading
+│       ├── write.ts      # File writing
+│       ├── edit.ts       # Precision editing
+│       ├── glob.ts       # File searching
+│       ├── grep.ts       # Content searching
+│       ├── todo.ts       # TODO management
+│       └── skill.ts      # Skill loading
 ├── mcp/
-│   ├── types.ts          # MCP 类型定义
-│   ├── client.ts         # MCP 客户端
-│   └── server.ts         # MCP 服务器管理
+│   ├── types.ts          # MCP type definitions
+│   ├── client.ts         # MCP client
+│   └── server.ts         # MCP server management
 ├── todo/
-│   ├── types.ts          # TODO 类型定义
-│   └── manager.ts        # TODO 列表管理
+│   ├── types.ts          # TODO type definitions
+│   └── manager.ts        # TODO list management
 ├── subagent/
-│   ├── types.ts          # 子代理类型定义
-│   ├── worker.ts         # WorkerAgent 执行器
-│   └── manager.ts        # 子代理管理 + delegate_task 工具
+│   ├── types.ts          # Sub-agent type definitions
+│   ├── worker.ts         # WorkerAgent executor
+│   └── manager.ts        # Sub-agent management + delegate_task tool
 └── skills/
-    ├── types.ts          # 技能类型定义
-    ├── loader.ts         # SKILL.md 解析器
-    └── registry.ts       # 技能注册表
+    ├── types.ts          # Skill type definitions
+    ├── loader.ts         # SKILL.md parser
+    └── registry.ts       # Skill registry
 
-skills/                   # 技能目录 (项目根目录)
+skills/                   # Skills directory (Project root)
 └── code-review/
-    └── SKILL.md          # 代码审查技能
+    └── SKILL.md          # Code review skill
 ```
 
-## 核心概念
+## Core Concepts
 
 ### Tools vs Skills
 
-| 概念 | 本质 | 例子 |
-|------|------|------|
-| **Tool** | 模型**能做**什么 (capabilities) | bash, read, write, glob, grep |
-| **Skill** | 模型**知道怎么做** (expertise) | code-review, MCP 开发, PDF 处理 |
+| Concept | Essence | Examples |
+|---------|---------|----------|
+| **Tool** | What the model **can do** (capabilities) | bash, read, write, glob, grep |
+| **Skill** | What the model **knows how to do** (expertise) | code-review, MCP development, PDF processing |
 
-### 技能系统
+### Skill System
 
-技能是按需加载的领域知识，通过 `load_skill` 工具注入到对话中：
+Skills represent on-demand domain knowledge injected into the conversation via the `load_skill` tool:
 
-1. **渐进式加载**: 元数据 (~100 tokens) → SKILL.md 内容 (~2000 tokens)
-2. **缓存友好**: 通过 tool_result 注入，不修改 system prompt
-3. **热插拔**: 写个 SKILL.md 就能教会模型新技能
+1.  **Progressive Loading**: Metadata (~100 tokens) → SKILL.md content (~2000 tokens).
+2.  **Cache Friendly**: Injected via `tool_result`, does not modify the system prompt.
+3.  **Hot-Swappable**: Teach the model a new skill simply by writing a `SKILL.md` file.
 
-### SKILL.md 格式
+### SKILL.md Format
 
 ```markdown
 ---
@@ -136,45 +136,45 @@ You now have expertise in conducting comprehensive code reviews...
 ...
 ```
 
-### 子代理
+### Sub-agents
 
-内置子代理通过 `delegate_task` 工具调用：
+Built-in sub-agents are invoked via the `delegate_task` tool:
 
-| 子代理 | 用途 | 可用工具 |
-|--------|------|----------|
-| explorer | 搜索代码库结构 | glob, grep, read |
-| researcher | 阅读理解代码 | read, glob, grep |
-| planner | 创建实现计划 | glob, grep, read |
+| Sub-agent | Purpose | Available Tools |
+|-----------|---------|-----------------|
+| explorer | Search codebase structure | glob, grep, read |
+| researcher | Read and understand code | read, glob, grep |
+| planner | Create implementation plans | glob, grep, read |
 
-## 实现详情
+## Implementation Details
 
-### 步骤 1: 基础对话
-- readline 命令行交互
-- OpenAI 协议流式输出
-- 对话历史管理
+### Step 1: Basic Conversation
+- readline CLI interaction
+- OpenAI protocol streaming output
+- Conversation history management
 
-### 步骤 2: 工具调用
-- Tool 接口定义
-- 工具注册表
-- 内置工具: bash, read, write, edit, glob, grep
-- Agent 工具调用循环
+### Step 2: Tool Calling
+- Tool interface definition
+- Tool registry
+- Built-in tools: bash, read, write, edit, glob, grep
+- Agent tool calling loop
 
-### 步骤 3: MCP 支持
-- MCP 客户端封装
-- 服务器连接管理
-- 配置文件自动加载
+### Step 3: MCP Support
+- MCP Client encapsulation
+- Server connection management
+- Automatic configuration file loading
 
-### 步骤 4: TODO 管理
-- TodoManager 任务列表管理
-- todo_write 工具
-- 状态跟踪: pending → in_progress → completed
+### Step 4: TODO Management
+- `TodoManager` for task list management
+- `todo_write` tool
+- State tracking: pending → in_progress → completed
 
-### 步骤 5: 子代理
-- SubagentConfig 配置
-- WorkerAgent 独立执行器
-- delegate_task 工具
+### Step 5: Sub-agents
+- `SubagentConfig` configuration
+- `WorkerAgent` independent executor
+- `delegate_task` tool
 
-### 步骤 6: 技能系统
-- SKILL.md 解析 (YAML frontmatter + Markdown body)
-- SkillRegistry 元数据管理
-- load_skill 工具 (知识注入)
+### Step 6: Skill System
+- `SKILL.md` parsing (YAML frontmatter + Markdown body)
+- `SkillRegistry` metadata management
+- `load_skill` tool (knowledge injection)
