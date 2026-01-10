@@ -8,12 +8,12 @@ A command-line agent tool inspired by Claude Code, designed for learning Agent d
 
 ## Features
 
-- [x] **Step 1: Basic Conversation** - CLI interaction + Streaming output
-- [x] **Step 2: Tool Calling** - Function calling (bash, read, write, edit, glob, grep)
-- [x] **Step 3: MCP Support** - Model Context Protocol
-- [x] **Step 4: TODO Management** - Task list management (`todo_write` tool)
-- [x] **Step 5: Sub-agents** - Delegate tasks to specialized sub-agents (`delegate_task` tool)
-- [x] **Step 6: Skill System** - On-demand domain knowledge injection (`load_skill` tool)
+- [x] **Step 1: Basic Conversation** - CLI interaction + Streaming output ([be88f03](https://github.com/msober/mini-agent/commit/be88f03))
+- [x] **Step 2: Tool Calling** - Function calling (bash, read, write, edit, glob, grep) ([dae56bc](https://github.com/msober/mini-agent/commit/dae56bc))
+- [x] **Step 3: MCP Support** - Model Context Protocol ([d238b9d](https://github.com/msober/mini-agent/commit/d238b9d))
+- [x] **Step 4: TODO Management** - Task list management (`todo_write` tool) ([6e25680](https://github.com/msober/mini-agent/commit/6e25680))
+- [x] **Step 5: Sub-agents** - Delegate tasks to specialized sub-agents (`delegate_task` tool) ([0f25524](https://github.com/msober/mini-agent/commit/0f25524))
+- [x] **Step 6: Skill System** - On-demand domain knowledge injection (`load_skill` tool) ([aa15e81](https://github.com/msober/mini-agent/commit/aa15e81))
 
 ## Quick Start
 
@@ -152,33 +152,33 @@ Built-in sub-agents are invoked via the `delegate_task` tool:
 
 ## Implementation Details
 
-### Step 1: Basic Conversation
+### Step 1: Basic Conversation ([be88f03](https://github.com/msober/mini-agent/commit/be88f03))
 - readline CLI interaction
 - OpenAI protocol streaming output
 - Conversation history management
 
-### Step 2: Tool Calling
+### Step 2: Tool Calling ([dae56bc](https://github.com/msober/mini-agent/commit/dae56bc))
 - Tool interface definition
 - Tool registry
 - Built-in tools: bash, read, write, edit, glob, grep
 - Agent tool calling loop
 
-### Step 3: MCP Support
+### Step 3: MCP Support ([d238b9d](https://github.com/msober/mini-agent/commit/d238b9d))
 - MCP Client encapsulation
 - Server connection management
 - Automatic configuration file loading
 
-### Step 4: TODO Management
+### Step 4: TODO Management ([6e25680](https://github.com/msober/mini-agent/commit/6e25680))
 - `TodoManager` for task list management
 - `todo_write` tool
 - State tracking: pending → in_progress → completed
 
-### Step 5: Sub-agents
+### Step 5: Sub-agents ([0f25524](https://github.com/msober/mini-agent/commit/0f25524))
 - `SubagentConfig` configuration
 - `WorkerAgent` independent executor
 - `delegate_task` tool
 
-### Step 6: Skill System
+### Step 6: Skill System ([aa15e81](https://github.com/msober/mini-agent/commit/aa15e81))
 - `SKILL.md` parsing (YAML frontmatter + Markdown body)
 - `SkillRegistry` metadata management
 - `load_skill` tool (knowledge injection)
