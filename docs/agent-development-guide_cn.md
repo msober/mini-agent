@@ -423,7 +423,7 @@ description: 包含安全检查的全面代码审查
 
 ## 代码仓库
 
-完整代码：[mini-agent](https://github.com/anthropics/courses/tree/master/agent_as_code/mini_agent)
+完整代码：[mini-agent](https://github.com/msober/mini-agent)
 
 **提交历史**:
 - `be88f03`: 第一步 - 基本对话
