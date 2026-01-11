@@ -423,7 +423,7 @@ Now you have the knowledge. Go build!
 
 ## Code Repository
 
-Full code: [mini-agent](https://github.com/anthropics/courses/tree/master/agent_as_code/mini_agent)
+Full code: [mini-agent](https://github.com/msober/mini-agent)
 
 **Commit History**:
 - `be88f03`: Step 1 - Basic conversation
