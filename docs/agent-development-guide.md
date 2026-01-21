@@ -31,6 +31,22 @@ Frameworks like LangChain and AutoGPT are convenient, but building from scratch 
 
 ---
 
+## Code Repository
+
+Full code: [mini-agent](https://github.com/msober/mini-agent)
+
+**Commit History**:
+- `be88f03`: Step 1 - Basic conversation
+- `dae56bc`: Step 2 - Tool invocation + ReAct pattern
+- `d238b9d`: Step 3 - MCP support
+- `6e25680`: Step 4 - TODO management
+- `0f25524`: Step 5 - Subagents
+- `aa15e81`: Step 6 - Skill system
+
+Each commit corresponds to one step. Use `git checkout <commit>` to see the evolution.
+
+---
+
 ## Step 1: Conversation Foundation
 
 > **Commit**: `be88f03` - Basic conversation with streaming output
@@ -115,7 +131,25 @@ function agent_loop(user_message):
 
 **Tool Registry**: A catalog of available tools. Each tool has:
 - A **definition** (name, description, parameters) that tells the LLM what it does
-- An **execute** function that performs the actual action
+
+tool expamle:
+```
+{
+    name: 'bash',             // tool name
+    description: 'Execute a bash command and return the output',
+    parameters: {
+      type: 'object',
+      properties: {
+        command: {
+          type: 'string',
+          description: 'The bash command to execute',
+        },
+      },
+      required: ['command'],  // required parameters
+    },
+  }
+```
+- Agent **execute** function that performs the actual action
 
 **Agent Loop**: Implements the ReAct pseudocode above. The loop continues until the LLM responds with text only (no tool calls), signaling task completion.
 
@@ -143,9 +177,9 @@ Built-in tools are limited. **MCP (Model Context Protocol)** is Anthropic's stan
 
 **MCP Client**: Connects to external servers via standard input/output pipes using the **stdio transport** (process pipes). This is the most common approach for local tool servers and is what we implement in this step.
 
-The client fetches tool definitions from connected MCP servers and translates them into the same `Tool` interface your built-in tools use.
+The client fetches tool definitions from connected MCP servers and translates them into the same `Tool` definition in step 2.
 
-**Unified Tool Registry**: The LLM sees all tools—built-in and MCP—as a single flat list. It doesn't know (or care) where they come from.
+**Unified Tool Registry**: The LLM sees all tools—built-in and MCP—as a single merged flat list. It doesn't know (or care) where they come from.
 
 **Auto-loading**: On startup, read `mcp-servers.json` and connect to all configured servers automatically.
 
@@ -155,30 +189,31 @@ The client fetches tool definitions from connected MCP servers and translates th
 
 ---
 
-## Step 4: TODO Management - Making Progress Visible
+## Step 4: TODO Management - Fighting Context Fade
 
-> **Commit**: `6e25680` - Task list tracking
+> **Commit**: `6e25680` - Persistent task tracking
 
 ### What & Why
 
-Complex tasks take many steps. Users want to see progress, not just a silent Agent.
+When facing multi-step prompts—like "refactor auth, add tests, and update docs"—standard Agents often suffer from **"Context Fade."** In these cases, the plan exists only in the model's short-term "head." After several tool calls, the original goal gets buried, leading the Agent to jump between tasks randomly or forget steps entirely.
 
-**TODO management** lets the Agent:
-- List its plan at the start ("I'll do X, then Y, then Z")
-- Update status in real-time (pending → in_progress → completed)
-- Show what it's working on
+**TODO Management** solves this by turning an invisible thought process into a **visible, externalized state**:
 
-**Key insight**: This isn't a TODO list for the user—it's the Agent's work plan, made visible.
+* **Combatting Context Fade**: By extracting the plan from the model's weights and placing it into a persistent list, we provide the Agent with an "external memory." It no longer has to guess what to do next; it simply checks the list.
+* **Explicit Trajectory**: The Agent is required to list its plan at the start ("I'll do X, then Y, then Z") and update statuses in real-time (`pending` → `in_progress` → `completed`).
+* **Execution Focus**: Seeing the "Visible Plan" forces the model to maintain a linear logical flow, preventing it from losing focus mid-way through a long sequence of actions.
+
+**Key Insight**: This is not just a UI feature for the user—it is the **Agent's navigation map**. Making plans visible ensures that even as the conversation grows long, the Agent remains anchored to its original mission.
 
 ### How It Works
 
-**TODO Manager**: Tracks a list of tasks with statuses. Detects changes (new task, status change, completion) and renders only the delta.
-
 **TODO Tool**: The LLM calls `todo_write` to update its plan. System prompt instructs it to use this on multi-step tasks.
+
+**TODO Manager**: Tracks a list of tasks with statuses. Detects changes (new task, status change, completion) and renders only the delta.
 
 **Smart Rendering**: Only show changes to avoid terminal spam. Completed tasks get a green checkmark. Current task shows a spinner.
 
-### Usage Example
+### Example
 
 ```
 User: "Refactor auth.ts to extract validators"
@@ -202,24 +237,22 @@ Agent calls todo_write:
 
 ---
 
-## Step 5: Subagents - Specialization Through Delegation
+## Step 5: Subagents - Context Isolation
 
 > **Commit**: `0f25524` - Specialized subagents
 
 ### What & Why
 
-A single Agent doing everything is inefficient. **Subagents** enable specialization:
-- **Main Agent**: Plans and coordinates
-- **Subagents**: Execute specialized tasks (search, research, planning)
+- A single agent attempting to handle a complex end-to-end workflow often falls victim to Context Pollution. When one agent explores dozens of files, its context window becomes saturated with raw data, leaving little room for reasoning or the actual execution of the task.
 
-**Analogy**: A CEO doesn't write code—they delegate to engineers.
+- The Solution: Process Isolation By spawning subagents, we achieve Context Isolation. The main agent remains the high-level strategist, while subagents handle the "noisy" work of exploration and research.
 
 ### How It Works
 
-**Subagent Config**: Each subagent has:
-- A specialized system prompt (e.g., "You're a code search expert")
-- Limited tool access (e.g., explorer only gets glob/grep/read)
-- Independent conversation history
+To implement this, we treat subagents as independent instances of our agent loop. Each has its own:
+- Specialized System Prompt: For example, "You are a Code Research Expert. Your only job is to find relevant code patterns."
+- Independent History: The subagent’s internal trial-and-error (searching, failing, retrying) stays within its own context and is never seen by the Main Agent.
+- Filtered Tool Access: An "Explorer" subagent might only have read_file and list_dir access, preventing it from accidentally modifying the codebase.
 
 **Worker Agent**: A mini-Agent that runs the subagent's task. It has its own tool loop with a max iteration limit (prevent infinite loops).
 
@@ -250,14 +283,21 @@ A single Agent doing everything is inefficient. **Subagents** enable specializat
 
 > **Commit**: `aa15e81` - On-demand knowledge loading
 
-### What & Why
+### What
 
-**Tools** = what the Agent *can do* (bash, read, write)
-**Skills** = what the Agent *knows how to do* (code review, PDF processing, MCP development)
+- **Tools** = what the Agent *can do* (bash, read, write)
+- **Skills** = what the Agent *knows how to do* (code review, PDF processing, MCP development)
 
-**The problem**: How do you teach an Agent specialized knowledge without fine-tuning?
+### On demand loading
+Putting all skills in the system prompt has problems:
+- **Cost**: 10,000+ tokens charged on every request
+- **Noise**: Irrelevant skills distract the model
 
-**The solution**: Skills—Markdown files with expert instructions that get loaded on-demand.
+The skill system solves this:
+- **Metadata always loaded**: Cheap (~100 tokens per skill)
+- **Full content on-demand**: Only pay when actually used
+- **System prompt stability**: Adding/modifying skills doesn't change the system prompt
+
 
 ### The Skill System Design
 
@@ -268,18 +308,6 @@ A single Agent doing everything is inefficient. **Subagents** enable specializat
 | **Activation** | LLM calls `load_skill("code-review")` when needed |
 | **Injection** | Full content (~2000 tokens) returned via `tool_result` |
 
-### Why On-Demand Loading?
-
-Putting all skills in the system prompt has problems:
-- **Cost**: 10,000+ tokens charged on every request
-- **Noise**: Irrelevant skills distract the model
-
-The skill system solves this:
-- **Metadata always loaded**: Cheap (~100 tokens per skill)
-- **Full content on-demand**: Only pay when actually used
-- **System prompt stability**: Adding/modifying skills doesn't change the system prompt prefix
-
-**Note on caching**: Anthropic's prompt caching is prefix-based. Since skills are injected via `tool_result` (which appears in the conversation, not the system prompt), the system prompt prefix remains cacheable. However, the overall cache efficiency depends on your conversation patterns.
 
 ### SKILL.md Format
 
@@ -352,56 +380,7 @@ All feed into the ReAct loop:
   Reasoning → Acting → Observing → (repeat until done)
 ```
 
-The beauty: **Each feature is a modular addition**. You can build step-by-step, and each addition enhances the Agent's capabilities without breaking existing functionality.
-
----
-
-## Production Considerations
-
-This mini-agent is for learning. Production requires:
-
-**Security**:
-- **Sandbox tool execution** (containers, VMs, or restricted environments)
-- **Allowlist approach**: Only permit explicitly approved commands/operations (avoid blocklist thinking—you can't enumerate all dangerous commands)
-- **Principle of least privilege**: Tools should have minimal required permissions
-- **Secure credential management** (secrets managers, not environment variables)
-
-**Reliability**:
-- Retry failed tool calls with exponential backoff
-- Timeout controls for all external operations
-- Comprehensive logging and tracing
-- **Idempotency**: Ensure tool retries are safe (especially for write operations)
-
-**Performance**:
-- Prompt caching strategy (stable prefixes, cache-aware message ordering)
-- Truncate long tool outputs (with clear indication of truncation)
-- Parallel tool calls where the API and logic allow
-
-**Cost Control**:
-- **Token budgets**: Set limits per request and per session
-- **Rate limiting**: Prevent runaway loops from exhausting API quotas
-- **Usage monitoring**: Track and alert on unusual consumption patterns
-
-**Compliance & Observability**:
-- **Audit logging**: Record all tool invocations and their results
-- **User attribution**: Track which user triggered which actions
-- **Data retention policies**: Handle conversation history appropriately
-
-**UX**:
-- Graceful interruption (Ctrl+C handling, cleanup on abort)
-- Session persistence (resume conversations)
-- Conversation optimization (summarization for long contexts)
-
----
-
-## Next Steps
-
-After mastering these concepts, explore:
-
-1. **Multi-modal Agents**: Process images, PDFs, videos
-2. **Multi-Agent Systems**: Agent-to-agent communication protocols
-3. **Long-term Memory**: Vector databases + RAG
-4. **Self-improvement**: Learning from user feedback
+**Each feature is a modular addition**. You can build step-by-step, and each addition enhances the Agent's capabilities without breaking existing functionality.
 
 ---
 
@@ -418,19 +397,3 @@ After mastering these concepts, explore:
 3. Being able to customize freely for your use case
 
 Now you have the knowledge. Go build!
-
----
-
-## Code Repository
-
-Full code: [mini-agent](https://github.com/msober/mini-agent)
-
-**Commit History**:
-- `be88f03`: Step 1 - Basic conversation
-- `dae56bc`: Step 2 - Tool invocation + ReAct pattern
-- `d238b9d`: Step 3 - MCP support
-- `6e25680`: Step 4 - TODO management
-- `0f25524`: Step 5 - Subagents
-- `aa15e81`: Step 6 - Skill system
-
-Each commit corresponds to one step. Use `git checkout <commit>` to see the evolution.
