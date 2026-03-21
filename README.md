@@ -4,7 +4,7 @@
 
 A command-line agent tool inspired by Claude Code, designed for learning Agent development.
 
-> **📖 New to Agent development?** Read the [Agent Development Guide](docs/agent-development-guide.md) for a comprehensive walkthrough of building an AI Agent from scratch in 6 steps.
+[build-your-own-ai-agent](https://jingming.pro/posts/build-your-own-ai-agent)
 
 ## Features
 
